@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Dashboard Creator</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+        }
+
+        .dashboard-controls {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #3051d3;
+        }
+
+        .dashboard-title {
+            margin: 20px 0;
+            padding: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-thumbnail {
+            height: 180px;
+            background-color: #eee;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .card-content {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #666;
+            flex: 1;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .card-link {
+            display: block;
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-top: 10px;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .error-message {
+            color: #e63946;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .retry-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: var(--primary-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .card-thumbnail {
+            position: relative;
+        }
+        
+        .card-thumbnail:hover .retry-btn {
+            opacity: 1;
+        }
+        
+        .thumbnail-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .api-notice {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .export-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        #exportBtn {
+            width: auto;
+            margin: 0 auto;
+            display: inline-block;
+        }
+        
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Link Dashboard Creator</h1>
+        
+        <div class="dashboard-controls">
+            <div class="input-group">
+                <label for="dashboardTitle">Dashboard Title</label>
+                <input type="text" id="dashboardTitle" placeholder="My Research Project">
+            </div>
+            
+            <div class="input-group">
+                <label for="linkUrl">Website URL</label>
+                <input type="url" id="linkUrl" placeholder="https://example.com">
+            </div>
+            
+            <div class="input-group">
+                <label for="linkDescription">Description (optional)</label>
+                <input type="text" id="linkDescription" placeholder="Brief description of this link">
+            </div>
+            
+            <button id="addLinkBtn">Add Link to Dashboard</button>
+            <p class="error-message" id="errorMsg"></p>
+            <p class="api-notice">Note: thum.io API has a limit of 1,000 free thumbnail requests per month. <a href="https://www.thum.io/pricing" target="_blank">See pricing</a></p>
+        </div>
+        
+        <h2 class="dashboard-title" id="displayTitle">My Dashboard</h2>
+        
+        <div class="card-grid" id="cardGrid">
+            <!-- Cards will be added here dynamically -->
+        </div>
+        
+        <div class="export-section">
+            <button id="exportBtn">Export Dashboard HTML</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const dashboardTitleInput = document.getElementById('dashboardTitle');
+            const linkUrlInput = document.getElementById('linkUrl');
+            const linkDescriptionInput = document.getElementById('linkDescription');
+            const addLinkBtn = document.getElementById('addLinkBtn');
+            const displayTitle = document.getElementById('displayTitle');
+            const cardGrid = document.getElementById('cardGrid');
+            const errorMsg = document.getElementById('errorMsg');
+            const exportBtn = document.getElementById('exportBtn');
+            
+            // Load saved dashboard if exists
+            loadDashboard();
+            
+            // Event Listeners
+            dashboardTitleInput.addEventListener('input', function() {
+                displayTitle.textContent = this.value || 'My Dashboard';
+                saveDashboard();
+            });
+            
+            addLinkBtn.addEventListener('click', addNewLink);
+            exportBtn.addEventListener('click', exportDashboard);
+            
+            // Functions
+            function addNewLink() {
+                const url = linkUrlInput.value.trim();
+                
+                if (!url) {
+                    showError('Please enter a valid URL');
+                    return;
+                }
+                
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    showError('URL must start with http:// or https://');
+                    return;
+                }
+                
+                errorMsg.textContent = '';
+                
+                // Create new card
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // Generate thumbnail
+                let thumbnailUrl = `https://image.thum.io/get/width/500/crop/300/${url}`;
+                
+                card.innerHTML = `
+                    <div class="card-thumbnail" style="background-image: url('${thumbnailUrl}')">
+                        <button class="retry-btn" title="Retry thumbnail generation">↻</button>
+                        <div class="thumbnail-loading">Loading...</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">${getHostname(url)}</div>
+                        <div class="card-description">${linkDescriptionInput.value || 'No description provided'}</div>
+                        <a href="${url}" class="card-link" target="_blank">${url}</a>
+                    </div>
+                `;
+                
+                // Add functionality to retry button
+                const retryBtn = card.querySelector('.retry-btn');
+                const thumbnailLoading = card.querySelector('.thumbnail-loading');
+                const thumbnailDiv = card.querySelector('.card-thumbnail');
+                
+                // Check if thumbnail loads correctly
+                const img = new Image();
+                img.onload = function() {
+                    thumbnailLoading.style.display = 'none';
+                };
+                img.onerror = function() {
+                    thumbnailLoading.textContent = 'Failed to load thumbnail';
+                    thumbnailLoading.style.display = 'flex';
+                };
+                img.src = thumbnailUrl;
+                
+                retryBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    
+                    // Show loading indicator
+                    thumbnailLoading.textContent = 'Loading...';
+                    thumbnailLoading.style.display = 'flex';
+                    
+                    // Add cache buster to URL to force refresh
+                    const refreshedThumbnailUrl = `https://image.thum.io/get/width/500/crop/300/nocache/${Date.now()}/${url}`;
+                    
+                    // Update background image
+                    thumbnailDiv.style.backgroundImage = `url('${refreshedThumbnailUrl}')`;
+                    
+                    // Check if new thumbnail loads
+                    const newImg = new Image();
+                    newImg.onload = function() {
+                        thumbnailLoading.style.display = 'none';
+                        saveDashboard(); // Save the updated URL
+                    };
+                    newImg.onerror = function() {
+                        thumbnailLoading.textContent = 'Failed to load thumbnail';
+                        thumbnailLoading.style.display = 'flex';
+                    };
+                    newImg.src = refreshedThumbnailUrl;
+                });
+                
+                // Add remove functionality
+                card.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    if (confirm('Remove this card?')) {
+                        card.remove();
+                        saveDashboard();
+                    }
+                });
+                
+                // Add card to grid
+                cardGrid.appendChild(card);
+                
+                // Clear inputs
+                linkUrlInput.value = '';
+                linkDescriptionInput.value = '';
+                
+                // Save dashboard
+                saveDashboard();
+            }
+            
+            function getHostname(url) {
+                try {
+                    const hostname = new URL(url).hostname;
+                    return hostname.replace('www.', '');
+                } catch (e) {
+                    return url;
+                }
+            }
+            
+            function showError(message) {
+                errorMsg.textContent = message;
+                setTimeout(() => {
+                    errorMsg.textContent = '';
+                }, 3000);
+            }
+            
+            function saveDashboard() {
+                const dashboard = {
+                    title: displayTitle.textContent,
+                    cards: []
+                };
+                
+                document.querySelectorAll('.card').forEach(card => {
+                    const thumbnailStyle = card.querySelector('.card-thumbnail').style.backgroundImage;
+                    const thumbnailUrl = thumbnailStyle.replace('url("', '').replace('")', '');
+                    const title = card.querySelector('.card-title').textContent;
+                    const description = card.querySelector('.card-description').textContent;
+                    const link = card.querySelector('.card-link').href;
+                    
+                    dashboard.cards.push({
+                        thumbnailUrl,
+                        title,
+                        description,
+                        link
+                    });
+                });
+                
+                localStorage.setItem('linkDashboard', JSON.stringify(dashboard));
+            }
+            
+            function loadDashboard() {
+                const savedDashboard = localStorage.getItem('linkDashboard');
+                
+                if (savedDashboard) {
+                    const dashboard = JSON.parse(savedDashboard);
+                    
+                    // Set title
+                    displayTitle.textContent = dashboard.title;
+                    dashboardTitleInput.value = dashboard.title;
+                    
+                    // Add cards
+                    dashboard.cards.forEach(cardData => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        
+                        card.innerHTML = `
+                            <div class="card-thumbnail" style="background-image: url('${cardData.thumbnailUrl}')"></div>
+                            <div class="card-content">
+                                <div class="card-title">${cardData.title}</div>
+                                <div class="card-description">${cardData.description}</div>
+                                <a href="${cardData.link}" class="card-link" target="_blank">${cardData.link}</a>
+                            </div>
+                        `;
+                        
+                        // Add retry button functionality
+                        const retryBtn = card.querySelector('.retry-btn');
+                        const thumbnailLoading = card.querySelector('.thumbnail-loading');
+                        const thumbnailDiv = card.querySelector('.card-thumbnail');
+                        
+                        if (retryBtn) {
+                            retryBtn.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                
+                                // Show loading indicator
+                                thumbnailLoading.textContent = 'Loading...';
+                                thumbnailLoading.style.display = 'flex';
+                                
+                                // Add cache buster to URL to force refresh
+                                const refreshedThumbnailUrl = `https://image.thum.io/get/width/500/crop/300/nocache/${Date.now()}/${cardData.link}`;
+                                
+                                // Update background image
+                                thumbnailDiv.style.backgroundImage = `url('${refreshedThumbnailUrl}')`;
+                                
+                                // Check if new thumbnail loads
+                                const newImg = new Image();
+                                newImg.onload = function() {
+                                    thumbnailLoading.style.display = 'none';
+                                    cardData.thumbnailUrl = refreshedThumbnailUrl;
+                                    saveDashboard(); // Save the updated URL
+                                };
+                                newImg.onerror = function() {
+                                    thumbnailLoading.textContent = 'Failed to load thumbnail';
+                                    thumbnailLoading.style.display = 'flex';
+                                };
+                                newImg.src = refreshedThumbnailUrl;
+                            });
+                        }
+                        
+                        // Add remove functionality
+                        card.addEventListener('contextmenu', function(e) {
+                            e.preventDefault();
+                            if (confirm('Remove this card?')) {
+                                card.remove();
+                                saveDashboard();
+                            }
+                        });
+                        
+                        cardGrid.appendChild(card);
+                    });
+                }
+            }
+            
+            function exportDashboard() {
+                const dashboard = {
+                    title: displayTitle.textContent,
+                    cards: []
+                };
+                
+                document.querySelectorAll('.card').forEach(card => {
+                    const thumbnailStyle = card.querySelector('.card-thumbnail').style.backgroundImage;
+                    const thumbnailUrl = thumbnailStyle.replace('url("', '').replace('")', '');
+                    const title = card.querySelector('.card-title').textContent;
+                    const description = card.querySelector('.card-description').textContent;
+                    const link = card.querySelector('.card-link').href;
+                    
+                    dashboard.cards.push({
+                        thumbnailUrl,
+                        title,
+                        description,
+                        link
+                    });
+                });
+                
+                const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${dashboard.title}</title>
+                    <style>
+                        :root {
+                            --primary-color: #4361ee;
+                            --bg-color: #f8f9fa;
+                            --card-bg: #ffffff;
+                            --text-color: #333;
+                            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                            --border-radius: 8px;
+                        }
+
+                        body {
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            margin: 0;
+                            padding: 20px;
+                            background-color: var(--bg-color);
+                            color: var(--text-color);
+                            line-height: 1.6;
+                        }
+
+                        .container {
+                            max-width: 1200px;
+                            margin: 0 auto;
+                        }
+
+                        h1 {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            color: var(--primary-color);
+                        }
+
+                        .card-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                            gap: 20px;
+                        }
+
+                        .card {
+                            background-color: var(--card-bg);
+                            border-radius: var(--border-radius);
+                            overflow: hidden;
+                            box-shadow: var(--card-shadow);
+                            transition: transform 0.3s, box-shadow 0.3s;
+                            display: flex;
+                            flex-direction: column;
+                            height: 300px;
+                        }
+
+                        .card:hover {
+                            transform: translateY(-5px);
+                            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+                        }
+
+                        .card-thumbnail {
+                            height: 180px;
+                            background-color: #eee;
+                            background-size: cover;
+                            background-position: center;
+                            background-repeat: no-repeat;
+                        }
+
+                        .card-content {
+                            padding: 15px;
+                            flex: 1;
+                            display: flex;
+                            flex-direction: column;
+                        }
+
+                        .card-title {
+                            font-weight: 600;
+                            font-size: 16px;
+                            margin-bottom: 5px;
+                            display: -webkit-box;
+                            -webkit-box-orient: vertical;
+                            -webkit-line-clamp: 2;
+                            overflow: hidden;
+                        }
+
+                        .card-description {
+                            font-size: 14px;
+                            color: #666;
+                            flex: 1;
+                            overflow: hidden;
+                            display: -webkit-box;
+                            -webkit-box-orient: vertical;
+                            -webkit-line-clamp: 2;
+                        }
+
+                        .card-link {
+                            display: block;
+                            text-decoration: none;
+                            color: var(--primary-color);
+                            font-weight: 500;
+                            margin-top: 10px;
+                            font-size: 14px;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .card-grid {
+                                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>${dashboard.title}</h1>
+                        <div class="card-grid">
+                            ${dashboard.cards.map(card => `
+                                <div class="card">
+                                    <div class="card-thumbnail" style="background-image: url('${card.thumbnailUrl}')"></div>
+                                    <div class="card-content">
+                                        <div class="card-title">${card.title}</div>
+                                        <div class="card-description">${card.description}</div>
+                                        <a href="${card.link}" class="card-link" target="_blank">${card.link}</a>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </body>
+                </html>
+                `;
+                
+                // Create file and download
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${dashboard.title.replace(/\s+/g, '-').toLowerCase()}-dashboard.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+    </script>
+</body>
+</html>
